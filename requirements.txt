@@ -1,0 +1,45 @@
+
+# Django==4.2.0
+# langchain==0.3.0
+# langchain-nvidia-ai-endpoints==0.3.5
+# python-decouple==3.8
+
+# ===================================================================
+# COMPLETE WORKING requirements.txt
+# Based on your successful installation
+# ===================================================================
+
+# Django Framework
+Django==4.2.0
+
+# CORS for React communication
+django-cors-headers==4.3.1
+
+# LangChain and AI
+langchain==0.3.17
+langchain-core==0.3.80
+langchain-nvidia-ai-endpoints==0.3.5
+langchain-text-splitters==0.3.11
+
+# Configuration Management
+python-decouple==3.8
+
+# Additional Dependencies (automatically installed)
+langsmith==0.3.45
+pillow==10.4.0
+zstandard==0.23.0
+
+# Core Python Libraries (already included but listing for completeness)
+SQLAlchemy==2.0.44
+aiohttp==3.13.2
+aiohappyeyeballs==2.6.1
+aiosignal==1.4.0
+attrs==25.4.0
+frozenlist==1.8.0
+greenlet==3.3.0
+multidict==6.7.0
+numpy==1.26.4
+packaging==24.2
+propcache==0.4.1
+tenacity==8.5.0
+yarl==1.22.0
