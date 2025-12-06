@@ -134,7 +134,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # CORS settings for React frontend
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",  # React development server
-    "https://your-react-app.vercel.app",  # Replace with your actual Vercel URL
+    "https://chatbot-react-frontend-wefe1iu2j-rema-s-nampoothirys-projects.vercel.app",  # Your actual Vercel URL
 ]
 
 CORS_ALLOW_CREDENTIALS = True
