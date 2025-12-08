@@ -71,7 +71,53 @@ Weather in {city_name}:
             return weather_info.strip()
         
         elif response.status_code == 404:
-            return f"City '{city_name}' not found. Please check the spelling."
+            #return f"City '{city_name}' not found. Please check the spelling."
+            # City not found by name, try geocoding
+            print(f"City '{city_name}' not found by name, trying geocoding...")
+            
+            # Get coordinates for the city
+            coords = get_coordinates(city_name)
+            
+            # If coordinates found, try weather API with coordinates
+            if coords:
+                print(f"Found coordinates: {coords['lat']}, {coords['lon']}")
+                
+                
+                # Build new request with coordinates
+                coord_params = {
+                    'lat': coords['lat'],
+                    'lon': coords['lon'],
+                    'appid': weather_api_key,
+                    'units': 'metric'
+                }
+                # Try weather API with coordinates
+                coord_response = requests.get(base_url, params=coord_params, timeout=60)
+                # Check if successful
+                if coord_response.status_code == 200:
+                    # Parse the response
+                    data = coord_response.json()
+                    
+                    
+                    # Extract weather information
+                    temperature = data['main']['temp']
+                    feels_like = data['main']['feels_like']
+                    humidity = data['main']['humidity']
+                    description = data['weather'][0]['description']
+                    wind_speed = data['wind']['speed']
+                    
+                    # Format weather info (use the name from geocoding)
+                    weather_info = f"""
+Weather in {coords['name']}:
+- Temperature: {temperature}°C (Feels like: {feels_like}°C)
+- Condition: {description.capitalize()}
+- Humidity: {humidity}%
+- Wind Speed: {wind_speed} m/s
+                    """
+                    
+                    return weather_info.strip()
+                
+            # If geocoding also failed, show error
+            return f"City '{city_name}' not found. Please check the spelling or try a nearby major city."
         
         else:
             return f"Could not fetch weather data. Error code: {response.status_code}"
@@ -102,6 +148,10 @@ def extract_city_name(user_message):
     patterns = [
         r'weather in ([A-Za-z\s]+)',
         r'temperature in ([A-Za-z\s]+)',
+        r'humidity in ([A-Za-z\s]+)',      # NEW
+        r'rain.*in ([A-Za-z\s]+)',         # NEW
+        r'hot.*in ([A-Za-z\s]+)',          # NEW
+        r'cold.*in ([A-Za-z\s]+)',         # NEW
         r'forecast for ([A-Za-z\s]+)',
         r'climate in ([A-Za-z\s]+)',
         r'weather of ([A-Za-z\s]+)',
@@ -124,6 +174,52 @@ def extract_city_name(user_message):
         return words[-1].title()
     
     return None
+
+def get_coordinates(city_name):
+    """
+    Get latitude and longitude for a city using OpenWeatherMap Geocoding API
+    
+    This function helps find small cities that the main weather API doesn't recognize.
+    
+    Example:
+    Input: "Pulluvazhy"
+    Output: {"lat": 10.1, "lon": 76.4, "name": "Pulluvazhy"}
+    """
+    try:
+        # Get API key
+        weather_api_key = config('WEATHER_API_KEY')
+        
+        # Geocoding API URL
+        geocoding_url = "http://api.openweathermap.org/geo/1.0/direct"
+        
+        # Parameters
+        params = {
+            'q': city_name,           # City to search
+            'limit': 1,               # Get only 1 result (the best match)
+            'appid': weather_api_key  # Same API key
+        }
+        
+        # Call Geocoding API
+        response = requests.get(geocoding_url, params=params, timeout=10)
+        
+        # Check if successful
+        if response.status_code == 200:
+            data = response.json()
+            
+            # Check if we got results
+            if data and len(data) > 0:
+                return {
+                    'lat': data[0]['lat'],      # Latitude
+                    'lon': data[0]['lon'],      # Longitude
+                    'name': data[0].get('name', city_name)  # Actual city name
+                }
+        
+        # If failed, return None
+        return None
+        
+    except Exception as e:
+        return None
+
 
 
 # ============================================
@@ -150,7 +246,17 @@ def get_nvidia_response(user_message):
         # ============================================
         # STEP 1: Check if user is asking about weather
         # ============================================
-        weather_keywords = ['weather', 'temperature', 'forecast', 'climate']
+        #weather_keywords = ['weather', 'temperature', 'forecast', 'climate']
+        weather_keywords = [
+            'weather', 'temperature', 'forecast', 'climate',
+            'rain', 'raining', 'rainy', 'rainfall',
+            'humidity', 'humid',
+            'hot', 'cold', 'warm', 'cool',
+            'sunny', 'cloudy', 'cloud', 'clouds',
+            'wind', 'windy',
+            'storm', 'stormy',
+            'snow', 'snowing', 'snowy'
+        ]
         message_lower = user_message.lower()
         
         is_weather_question = any(keyword in message_lower for keyword in weather_keywords)
