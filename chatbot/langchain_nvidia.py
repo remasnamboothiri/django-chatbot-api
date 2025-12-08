@@ -48,7 +48,7 @@ def get_weather(city_name):
         }
         
         # Call the Weather API
-        response = requests.get(base_url, params=params, timeout=10)
+        response = requests.get(base_url, params=params, timeout=60)
         
         # Check if API call was successful
         if response.status_code == 200:
