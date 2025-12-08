@@ -1,14 +1,11 @@
 import warnings
-import requests  #  For calling Weather API
-import json      # For handling JSON data
+import requests
+import re
 from langchain_nvidia_ai_endpoints import ChatNVIDIA
 from langchain_core.messages import HumanMessage, SystemMessage
-from langchain.agents import Tool, initialize_agent, AgentType  # : For tools
 from decouple import config
-import re  # Add this at top with other imports
-from concurrent.futures import ThreadPoolExecutor, TimeoutError as FutureTimeoutError  # Add this too
 
-# Suppress the specific warning
+# Suppress warnings
 warnings.filterwarnings('ignore', message='.*type is unknown.*')
 
 
@@ -88,78 +85,59 @@ Weather in {city_name}:
     except Exception as e:
         return f"Error getting weather: {str(e)}"
 
-# def get_nvidia_response(user_message):
-#     """
-#     Get AI response using NVIDIA's FREE API
+# ============================================
+# SECTION 3: HELPER FUNCTION - Extract City Name
+# ============================================
+
+def extract_city_name(user_message):
+    """
+    Extract city name from user message
     
-#     WORKING MODEL: nvidia/llama-3.1-nemotron-nano-8b-v1
-#     This is THE BEST model for chatbots - perfect balance!
-#     """
-#     try:
-#         # Get API key from .env file
-#         nvidia_api_key = config('NVIDIA_API_KEY', default='')
-        
-#         # Validate API key
-#         if not nvidia_api_key:
-#             return "⚠️ NVIDIA API key not found. Please add NVIDIA_API_KEY=nvapi-your-key to your .env file!"
-        
-#         #if not nvidia_api_key.startswith('nvapi-'):
-#             #return "⚠️ Invalid NVIDIA API key format. Key should start with 'nvapi-'"
-        
-#         # Initialize ChatNVIDIA with CORRECT MODEL NAME!
-#         # FORMAT: publisher/model-name (MUST match exactly!)
-#         llm = ChatNVIDIA(
-#             model="nvidia/llama-3.1-nemotron-nano-8b-v1",  # ✅ CORRECT FORMAT!
-#             api_key=nvidia_api_key,
-#             temperature=0.7,
-#             max_tokens=500,
-#         )
-        
-#         # Create messages
-#         messages = [
-#             SystemMessage(content="You are a helpful, friendly AI assistant. "),
-#             HumanMessage(content=user_message)
-#         ]
-        
-#         # Get AI response
-#         response = llm.invoke(messages)
-        
-#         # Extract content
-#         if hasattr(response, 'content'):
-#             return response.content
-#         else:
-#             return str(response)
-            
-#     except Exception as e:
-#         error_msg = str(e).lower()
-        
-#         # User-friendly error messages
-#         if "401" in error_msg or "unauthorized" in error_msg:
-#             return "❌ API Key Error: Your NVIDIA API key is invalid. Get a new one from build.nvidia.com"
-        
-#         elif "404" in error_msg or "not found" in error_msg:
-#             return "❌ Model not found. Using: nvidia/llama-3.1-nemotron-nano-8b-v1"
-        
-#         elif "rate limit" in error_msg or "429" in str(e):
-#             return "❌ Too many requests! Please wait 30 seconds and try again."
-        
-#         elif "timeout" in error_msg:
-#             return "❌ Request timed out. Please try a shorter message."
-        
-#         else:
-#             return f"❌ Error: {str(e)[:150]}. Please check your API key and internet connection."
-        
-        
-        
-        
+    Examples:
+    "weather in London" -> "London"
+    "What's the temperature in Paris?" -> "Paris"
+    "How's the climate in New York" -> "New York"
+    """
+    # Common patterns to find city names
+    patterns = [
+        r'weather in ([A-Za-z\s]+)',
+        r'temperature in ([A-Za-z\s]+)',
+        r'forecast for ([A-Za-z\s]+)',
+        r'climate in ([A-Za-z\s]+)',
+        r'weather of ([A-Za-z\s]+)',
+        r'temperature of ([A-Za-z\s]+)',
+    ]
+    
+    message_lower = user_message.lower()
+    
+    for pattern in patterns:
+        match = re.search(pattern, message_lower)
+        if match:
+            city = match.group(1).strip()
+            # Capitalize each word (e.g., "new york" -> "New York")
+            return city.title()
+    
+    # If no pattern matches, try to find the last word(s) as city name
+    # This handles cases like "weather London" or "temperature Paris"
+    words = user_message.split()
+    if len(words) >= 2:
+        return words[-1].title()
+    
+    return None
 
-# SECTION 3: AI RESPONSE FUNCTION 
 
+# ============================================
+# SECTION 4: MAIN AI RESPONSE FUNCTION
+# ============================================
 
 def get_nvidia_response(user_message):
     """
-     Get AI response using NVIDIA's API with Weather Tool
-     NOW WITH: Bracket removal + Timeout protection
+    Get AI response using NVIDIA's API
+    
+    LOGIC:
+    1. Check if user is asking about weather
+    2. If YES -> Extract city name and call get_weather()
+    3. If NO -> Use simple ChatNVIDIA for normal conversation
     """
     try:
         # Get NVIDIA API key from .env file
@@ -170,71 +148,52 @@ def get_nvidia_response(user_message):
             return "⚠️ NVIDIA API key not found. Please add NVIDIA_API_KEY to .env file!"
         
         # ============================================
-        # STEP 1: Create the Weather Tool
+        # STEP 1: Check if user is asking about weather
         # ============================================
-        # This tells LangChain about our weather function
-        weather_tool = Tool(
-            name="Weather",  # Tool name (AI will see this)
-            func=get_weather,  # The function to call
-            description="ONLY use this tool when the user EXPLICITLY asks about weather, temperature, forecast, or climate for a specific city. Do NOT use this tool for greetings or general questions. Input should be a city name."
-            # This description helps AI know when to use this tool
-        )
+        weather_keywords = ['weather', 'temperature', 'forecast', 'climate']
+        message_lower = user_message.lower()
+        
+        is_weather_question = any(keyword in message_lower for keyword in weather_keywords)
         
         # ============================================
-        # STEP 2: Create the AI Model
+        # STEP 2: If weather question -> Call weather function
         # ============================================
-        llm = ChatNVIDIA(
-            model="nvidia/llama-3.1-nemotron-nano-8b-v1",
-            api_key=nvidia_api_key,
-            temperature=0.7,
-            max_tokens=500,
-        )
-        
-        
-        
-        # ============================================
-        # STEP 3: Create an Agent with Tools
-        # ============================================
-        # Agent = AI that can use tools
-        # We give it the Weather Tool
-        agent = initialize_agent(
-            tools=[weather_tool],  # List of tools (we only have weather tool)
-            llm=llm,               # The AI model
-            agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION,  # Agent type
-            verbose=False,         # Don't show debug info
-            handle_parsing_errors=True, # Handle errors gracefully
-            agent_kwargs={
-                'prefix': 'You are a helpful, friendly AI assistant. Only use the weather tool when the user explicitly asks about weather. For greetings and general questions, respond naturally without mentioning weather.'
-            }
-        )
-        
-        # ============================================
-        # STEP 4: Send Message to Agent
-        # ============================================
-        # The agent will:
-        # - Read the user message
-        # - Decide if it needs to use the weather tool
-        # - Call the tool if needed
-        # - Generate a response
-        
-        with ThreadPoolExecutor(max_workers=1) as executor:
-            future = executor.submit(agent.run, user_message)
-            try:
-                # Wait maximum 30 seconds for response
-                response = future.result(timeout=30)
-            except FutureTimeoutError:
-                return "⏱️ Response took too long. Please try a simpler question or try again later." 
+        if is_weather_question:
+            city_name = extract_city_name(user_message)
             
-        # STEP 5: Clean the response (REMOVE BRACKETS) 
-        # Remove agent's thinking process in parentheses
-        cleaned_response = re.sub(r'\s*\([^)]*\)\s*', ' ', response)
-        # Remove extra spaces 
-        cleaned_response = ' '.join(cleaned_response.split()) 
-        return cleaned_response  
-            
-        # response = agent.run(user_message)
+            if city_name:
+                # Call the weather function
+                weather_data = get_weather(city_name)
+                return weather_data
+            else:
+                return "Please specify a city name. For example: 'weather in London'"
         
-        # return response
+        # ============================================
+        # STEP 3: If NOT weather question -> Normal AI chat
+        # ============================================
+        else:
+            # Create the AI model
+            llm = ChatNVIDIA(
+                model="nvidia/llama-3.1-nemotron-nano-8b-v1",
+                api_key=nvidia_api_key,
+                temperature=0.7,
+                max_tokens=500,
+            )
+            
+            # Create messages
+            messages = [
+                SystemMessage(content="You are a helpful, friendly AI assistant."),
+                HumanMessage(content=user_message)
+            ]
+            
+            # Get AI response
+            response = llm.invoke(messages)
+            
+            # Extract and return content
+            if hasattr(response, 'content'):
+                return response.content
+            else:
+                return str(response)
         
     except Exception as e:
         error_msg = str(e).lower()
