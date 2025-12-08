@@ -176,7 +176,7 @@ def get_nvidia_response(user_message):
         weather_tool = Tool(
             name="Weather",  # Tool name (AI will see this)
             func=get_weather,  # The function to call
-            description="Useful for getting current weather information for a city. Input should be a city name."
+            description="ONLY use this tool when the user EXPLICITLY asks about weather, temperature, forecast, or climate for a specific city. Do NOT use this tool for greetings or general questions. Input should be a city name."
             # This description helps AI know when to use this tool
         )
         
@@ -190,6 +190,8 @@ def get_nvidia_response(user_message):
             max_tokens=500,
         )
         
+        
+        
         # ============================================
         # STEP 3: Create an Agent with Tools
         # ============================================
@@ -200,7 +202,10 @@ def get_nvidia_response(user_message):
             llm=llm,               # The AI model
             agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION,  # Agent type
             verbose=False,         # Don't show debug info
-            handle_parsing_errors=True  # Handle errors gracefully
+            handle_parsing_errors=True, # Handle errors gracefully
+            agent_kwargs={
+                'prefix': 'You are a helpful, friendly AI assistant. Only use the weather tool when the user explicitly asks about weather. For greetings and general questions, respond naturally without mentioning weather.'
+            }
         )
         
         # ============================================
