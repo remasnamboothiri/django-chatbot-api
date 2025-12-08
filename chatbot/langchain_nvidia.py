@@ -5,6 +5,8 @@ from langchain_nvidia_ai_endpoints import ChatNVIDIA
 from langchain_core.messages import HumanMessage, SystemMessage
 from langchain.agents import Tool, initialize_agent, AgentType  # : For tools
 from decouple import config
+import re  # Add this at top with other imports
+from concurrent.futures import ThreadPoolExecutor, TimeoutError as FutureTimeoutError  # Add this too
 
 # Suppress the specific warning
 warnings.filterwarnings('ignore', message='.*type is unknown.*')
@@ -150,26 +152,14 @@ Weather in {city_name}:
         
         
         
-# ============================================
-# SECTION 3: AI RESPONSE FUNCTION (MODIFIED)
-# ============================================
+
+# SECTION 3: AI RESPONSE FUNCTION 
+
 
 def get_nvidia_response(user_message):
     """
-    Get AI response using NVIDIA's API with Weather Tool
-    
-    How it works:
-    1. Creates a Weather Tool from the get_weather function
-    2. Creates an AI agent that can use the Weather Tool
-    3. When user asks about weather, AI automatically calls the tool
-    4. Returns the complete response
-    
-    Example Flow:
-    User: "What's the weather in Paris?"
-    → AI detects "weather" keyword
-    → AI calls get_weather("Paris")
-    → AI gets weather data
-    → AI formats nice response: "The weather in Paris is..."
+     Get AI response using NVIDIA's API with Weather Tool
+     NOW WITH: Bracket removal + Timeout protection
     """
     try:
         # Get NVIDIA API key from .env file
@@ -221,9 +211,25 @@ def get_nvidia_response(user_message):
         # - Decide if it needs to use the weather tool
         # - Call the tool if needed
         # - Generate a response
-        response = agent.run(user_message)
         
-        return response
+        with ThreadPoolExecutor(max_workers=1) as executor:
+            future = executor.submit(agent.run, user_message)
+            try:
+                # Wait maximum 30 seconds for response
+                response = future.result(timeout=10)
+            except FutureTimeoutError:
+                return "⏱️ Response took too long. Please try a simpler question or try again later." 
+            
+        # STEP 5: Clean the response (REMOVE BRACKETS) 
+        # Remove agent's thinking process in parentheses
+        cleaned_response = re.sub(r'\s*\([^)]*\)\s*', ' ', response)
+        # Remove extra spaces 
+        cleaned_response = ' '.join(cleaned_response.split()) 
+        return cleaned_response  
+            
+        # response = agent.run(user_message)
+        
+        # return response
         
     except Exception as e:
         error_msg = str(e).lower()
