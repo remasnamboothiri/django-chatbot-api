@@ -21,6 +21,9 @@ langchain-core==0.3.80
 langchain-nvidia-ai-endpoints==0.3.5
 langchain-text-splitters==0.3.11
 
+# adding weather tool 
+requests==2.31.0
+
 # Configuration Management
 python-decouple==3.8
 
