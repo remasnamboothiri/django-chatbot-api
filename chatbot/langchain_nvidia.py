@@ -216,7 +216,7 @@ def get_nvidia_response(user_message):
             future = executor.submit(agent.run, user_message)
             try:
                 # Wait maximum 30 seconds for response
-                response = future.result(timeout=10)
+                response = future.result(timeout=30)
             except FutureTimeoutError:
                 return "⏱️ Response took too long. Please try a simpler question or try again later." 
             
