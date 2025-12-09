@@ -211,7 +211,7 @@ Examples:
                 
                 # Send weather data back to AI for natural response
                 second_response = client.chat.completions.create(
-                    model="nvidia/llama-3.1-nemotron-nano-8b-v1",
+                    model="nvidia/llama-3.1-nemotron-70b-instruct",
                     messages=[
                         {"role": "system", "content": system_prompt},
                         {"role": "user", "content": user_message},
