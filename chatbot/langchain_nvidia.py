@@ -155,13 +155,13 @@ def get_nvidia_response(user_message):
             "type": "function",
             "function": {
                 "name": "get_weather",
-                "description": "Retrieves real-time weather data (temperature, humidity, conditions) for a specified city. MUST have BOTH requirements: 1) User message contains weather keywords (weather/temperature/rain/hot/cold/humidity/forecast) AND 2) User message contains a city name. Never call for: greetings (hi/hello), general chat, questions without city names.",
+                "description": "Get current weather information for a specific city. Only use this when the user explicitly asks about weather, temperature, climate, or weather conditions for a particular location.",
                 "parameters": {
                     "type": "object",
                     "properties": {
                         "location": {
                             "type": "string",
-                            "description": "The city name, e.g., London, Paris, New York"
+                            "description": "The city name, e.g., London, eranakulam, New York, aluva"
                         }
                     },
                     "required": ["location"]
@@ -170,34 +170,42 @@ def get_nvidia_response(user_message):
         }]
         
         # System prompt for natural conversation
-        system_prompt = """You are a friendly AI assistant who can chat and provide weather information.
+        system_prompt = """You are a friendly AI assistant.
 
-CRITICAL FUNCTION CALLING RULES:
-1. NEVER call get_weather for:
-   - Greetings: "hi", "hello", "good morning", "hey"
-   - General questions: "how are you", "what can you do"
-   - Chat without weather words or city names
+IMPORTANT RULES:
+1. You can have normal conversations about ANY topic
+2. ONLY call the get_weather function when the user specifically asks about:
+   - Weather conditions (e.g., "What's the weather in Paris?")
+   - Temperature (e.g., "How hot is it in London?")
+   - Climate queries (e.g., "Is it raining in Tokyo?")
+   - Weather-related questions that mention a city
 
-2. ONLY call get_weather function when BOTH conditions are met:
-   - User message has weather words: weather, temperature, rain, hot, cold, humidity, forecast
-   - User message has a city name
-
-3. Response guidelines:
-   - Greetings → Respond warmly without mentioning weather
-   - Weather + City → Call get_weather function
-   - Other questions → Answer naturally
+3. DO NOT call get_weather for:
+   - Greetings (hello, hi, hey)
+   - General questions (how are you, what can you do)
+   - Non-weather topics (math, history, coding, etc.)
+   - Questions without a specific city name
+   
+4. Response guidelines:
+   - For greetings → Respond warmly without using any tools
+   - For weather questions → Use get_weather function
+   - For other topics → Answer naturally without using any tools
+   
 
 EXAMPLES:
-❌ "Hello" → DO NOT call function → Say "Hello! How can I help you today?"
-❌ "Good morning" → DO NOT call function → Say "Good morning! What would you like to know?"
-✅ "Weather in London" → CALL get_weather("London")
-✅ "Is it raining in Paris?" → CALL get_weather("Paris")
-❌ "How are you?" → DO NOT call function → Say "I'm doing well, thanks!"
+✅ "What's the weather in Mumbai?" → CALL get_weather
+✅ "Is it raining in London?" → CALL get_weather
+✅ "How cold is Paris today?" → CALL get_weather
+❌ "Hello!" → Just respond normally
+❌ "How are you?" → Just respond normally
+❌ "Tell me a joke" → Just respond normally
+❌ "What's 2+2?" → Just respond normally
+
 """
         
         # First API call - Let AI decide if it needs to call function
         response = client.chat.completions.create(
-            model="nvidia/llama-3.1-nemotron-nano-8b-v1",
+            model="nvidia/llama-3.1-nemotron-70b-instruct",
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_message}
@@ -224,7 +232,7 @@ EXAMPLES:
                 
                 # Send weather data back to AI for natural response
                 second_response = client.chat.completions.create(
-                    model="nvidia/llama-3.1-nemotron-nano-8b-v1",
+                    model="nvidia/llama-3.1-nemotron-70b-instruct",
                     messages=[
                         {"role": "system", "content": system_prompt},
                         {"role": "user", "content": user_message},
