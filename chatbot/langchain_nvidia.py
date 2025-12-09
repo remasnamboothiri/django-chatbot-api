@@ -155,7 +155,7 @@ def get_nvidia_response(user_message):
             "type": "function",
             "function": {
                 "name": "get_weather",
-                "description": "Get current weather information for a specific city. Use this when user asks about weather, temperature, climate, or weather conditions.",
+                "description": "Get current weather information for a specific city. ONLY use this function when the user EXPLICITLY asks about weather, temperature, forecast, or climate for a specific location. DO NOT use for greetings or general conversation.",
                 "parameters": {
                     "type": "object",
                     "properties": {
@@ -170,16 +170,31 @@ def get_nvidia_response(user_message):
         }]
         
         # System prompt for natural conversation
-        system_prompt = """You are a helpful, friendly AI assistant who speaks naturally and conversationally.
+        system_prompt = """You are a helpful, friendly AI assistant.
 
-When users ask about weather:
-1. Call the get_weather function with the city name
-2. After getting the weather data, respond in a warm, conversational tone
-3. Give helpful advice based on the weather (e.g., "Take an umbrella!" if rainy)
+IMPORTANT RULES:
+1. ONLY call the get_weather function when the user EXPLICITLY asks about weather, temperature, climate, or weather conditions for a specific city.
+2. DO NOT call get_weather for greetings like "hi", "hello", "good morning"
+3. DO NOT call get_weather for general conversation like "how are you", "i want to talk"
+4. DO NOT assume the user wants weather information unless they specifically ask for it
 
-For other questions:
+Examples of when to call get_weather:
+- "What's the weather in London?" → Call get_weather("London")
+- "How hot is it in Paris?"  → Call get_weather("Paris")
+- "Is it raining in Erankulam?"  → Call get_weather("Eranakulam")
+- "Temperature in Aluva?"  → Call get_weather("Aluva")
+
+Examples of when NOT to call get_weather:
+- "Hi good morning" → Just greet back
+- "Hello" → Just greet back
+- "I want to talk with you" → Respond normally
+- "How are you?" → Just respond: "I'm doing well, thank you! How can I help you?"
+- "Are you free now?" → Just respond: "Yes, I'm here to help! What do you need?"
+
+For normal conversation:
 - Respond naturally and helpfully
 - Be friendly and conversational
+- Do NOT mention weather unless asked
 """
         
         # First API call - Let AI decide if it needs to call function
