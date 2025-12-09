@@ -155,7 +155,7 @@ def get_nvidia_response(user_message):
             "type": "function",
             "function": {
                 "name": "get_weather",
-                "description": "Gets weather data for a city. Call this ONLY when user message contains BOTH: (1) weather-related words like 'weather', 'temperature', 'rain', 'hot', 'cold', 'humidity', 'forecast' AND (2) a city name. Examples: 'weather in London', 'temperature in ALuva', 'is it raining in Eranakulam'. DO NOT call for: greetings, questions without city names, general conversation.",
+                "description": "Gets current weather information for a specific city. ONLY call this when user explicitly asks about weather conditions AND mentions a city name. DO NOT call for greetings, general questions, or messages without weather-related words.",
                 "parameters": {
                     "type": "object",
                     "properties": {
@@ -170,15 +170,21 @@ def get_nvidia_response(user_message):
         }]
         
         # System prompt for natural conversation
-        system_prompt = """You are a helpful assistant that answers conversationally and also calls the get_weather function whenever the user asks about weather conditions for any location. 
-If the user asks a weather-related question (e.g., temperature, forecast, rain, wind, today/tomorrow weather), extract the location and call the get_weather function with correct parameters.
-Return natural, spoken-style conversational replies along with the function call. 
-If the user request is not related to weather, respond normally without calling the function.
+        system_prompt = """You are a helpful AI assistant.
+
+RULES:
+1. If user asks about weather WITH a city name → Use get_weather function
+2. For everything else (greetings, questions, chat) → Respond directly, do NOT use any function
+
+Examples:
+- "Hello" → Just say "Hello! How can I help you?"
+- "What's the weather in London?" → Use get_weather("London")
+- "How are you?" → Just say "I'm doing well, thanks for asking!"
 """
         
         # First API call - Let AI decide if it needs to call function
         response = client.chat.completions.create(
-            model="nvidia/llama-3.1-nemotron-nano-8b-v1",
+            model="nvidia/llama-3.1-nemotron-70b-instruct",
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_message}
