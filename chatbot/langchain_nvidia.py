@@ -155,7 +155,7 @@ def get_nvidia_response(user_message):
             "type": "function",
             "function": {
                 "name": "get_weather",
-                "description": "Get current weather information for a specific city. ONLY use this function when the user EXPLICITLY asks about weather, temperature, forecast, or climate for a specific location. DO NOT use for greetings or general conversation.",
+                "description": "Gets weather data for a city. Call this ONLY when user message contains BOTH: (1) weather-related words like 'weather', 'temperature', 'rain', 'hot', 'cold', 'humidity', 'forecast' AND (2) a city name. Examples: 'weather in London', 'temperature in ALuva', 'is it raining in Eranakulam'. DO NOT call for: greetings, questions without city names, general conversation.",
                 "parameters": {
                     "type": "object",
                     "properties": {
@@ -170,34 +170,16 @@ def get_nvidia_response(user_message):
         }]
         
         # System prompt for natural conversation
-        system_prompt = """You are a helpful, friendly AI assistant. You can have normal conversations and also provide weather information when asked.
+        system_prompt = """You are a helpful AI assistant.
 
-CRITICAL RULES - READ CAREFULLY:
+RULES:
+1. If user asks about weather WITH a city name → Use get_weather function
+2. For everything else (greetings, questions, chat) → Respond directly, do NOT use any function
 
-1. For greetings (hi, hello, good morning, hey):
-   - Just greet back warmly
-   - Do NOT mention weather
-   - Do NOT mention what you can do
-   - Do NOT ask if they want weather information
-   - Example: User says "Hello" → You say "Hello! How can I help you today?"
-
-2. For general conversation (how are you, i want to talk, are you free):
-   - Respond naturally to their question
-   - Do NOT mention weather
-   - Do NOT mention your capabilities
-   - Example: User says "I want to talk" → You say "Sure! What would you like to talk about?"
-
-3. ONLY call get_weather function when user EXPLICITLY asks about weather with a city name:
-   - "What's the weather in London?" → Call get_weather("London")
-   - "Temperature in Paris?" → Call get_weather("Paris")
-   - "Is it raining in Tokyo?" → Call get_weather("Tokyo")
-
-4. If user asks unclear question:
-   - Respond naturally to what they said
-   - Do NOT assume they want weather
-   - Do NOT mention weather unless they mention it first
-
-REMEMBER: Do NOT mention weather, cities, or your capabilities unless the user specifically asks about weather!
+Examples:
+- "Hello" → Just say "Hello! How can I help you?"
+- "What's the weather in London?" → Use get_weather("London")
+- "How are you?" → Just say "I'm doing well, thanks for asking!"
 """
         
         # First API call - Let AI decide if it needs to call function
