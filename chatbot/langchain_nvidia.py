@@ -170,38 +170,13 @@ def get_nvidia_response(user_message):
         }]
         
         # System prompt for natural conversation
-        system_prompt = """You are a friendly AI assistant.
+        system_prompt = """You are a helpful, friendly AI assistant who can chat naturally about any topic.
 
-IMPORTANT RULES:
-1. You can have normal conversations about ANY topic
-2. ONLY call the get_weather function when the user specifically asks about:
-   - Weather conditions (e.g., "What's the weather in Paris?")
-   - Temperature (e.g., "How hot is it in London?")
-   - Climate queries (e.g., "Is it raining in Tokyo?")
-   - Weather-related questions that mention a city
+You have access to a weather tool. Use it ONLY when users ask about weather/temperature/climate for a specific city.
 
-3. DO NOT call get_weather for:
-   - Greetings (hello, hi, hey)
-   - General questions (how are you, what can you do)
-   - Non-weather topics (math, history, coding, etc.)
-   - Questions without a specific city name
-   
-4. Response guidelines:
-   - For greetings → Respond warmly without using any tools
-   - For weather questions → Use get_weather function
-   - For other topics → Answer naturally without using any tools
-   
+For everything else (greetings, questions, general chat), just respond naturally without mentioning the weather tool or any rules.
 
-EXAMPLES:
-✅ "What's the weather in Mumbai?" → CALL get_weather
-✅ "Is it raining in London?" → CALL get_weather
-✅ "How cold is Paris today?" → CALL get_weather
-❌ "Hello!" → Just respond normally
-❌ "How are you?" → Just respond normally
-❌ "Tell me a joke" → Just respond normally
-❌ "What's 2+2?" → Just respond normally
-
-"""
+Be concise, warm, and helpful."""
         
         # First API call - Let AI decide if it needs to call function
         response = client.chat.completions.create(
