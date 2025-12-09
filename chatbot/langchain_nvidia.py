@@ -155,7 +155,7 @@ def get_nvidia_response(user_message):
             "type": "function",
             "function": {
                 "name": "get_weather",
-                "description": "Gets current weather information for a specific city. ONLY call this when user explicitly asks about weather conditions AND mentions a city name. DO NOT call for greetings, general questions, or messages without weather-related words.",
+                "description": "Retrieves real-time weather data (temperature, humidity, conditions) for a specified city. MUST have BOTH requirements: 1) User message contains weather keywords (weather/temperature/rain/hot/cold/humidity/forecast) AND 2) User message contains a city name. Never call for: greetings (hi/hello), general chat, questions without city names.",
                 "parameters": {
                     "type": "object",
                     "properties": {
@@ -184,7 +184,7 @@ Examples:
         
         # First API call - Let AI decide if it needs to call function
         response = client.chat.completions.create(
-            model="nvidia/llama-3.1-nemotron-70b-instruct",
+            model="nvidia/llama-3.1-nemotron-nano-8b-v1",
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_message}
@@ -211,7 +211,7 @@ Examples:
                 
                 # Send weather data back to AI for natural response
                 second_response = client.chat.completions.create(
-                    model="nvidia/llama-3.1-nemotron-70b-instruct",
+                    model="nvidia/llama-3.1-nemotron-nano-8b-v1",
                     messages=[
                         {"role": "system", "content": system_prompt},
                         {"role": "user", "content": user_message},
