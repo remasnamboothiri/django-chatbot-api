@@ -170,16 +170,10 @@ def get_nvidia_response(user_message):
         }]
         
         # System prompt for natural conversation
-        system_prompt = """You are a helpful AI assistant.
-
-RULES:
-1. If user asks about weather WITH a city name → Use get_weather function
-2. For everything else (greetings, questions, chat) → Respond directly, do NOT use any function
-
-Examples:
-- "Hello" → Just say "Hello! How can I help you?"
-- "What's the weather in London?" → Use get_weather("London")
-- "How are you?" → Just say "I'm doing well, thanks for asking!"
+        system_prompt = """You are a helpful assistant that answers conversationally and also calls the get_weather function whenever the user asks about weather conditions for any location. 
+If the user asks a weather-related question (e.g., temperature, forecast, rain, wind, today/tomorrow weather), extract the location and call the get_weather function with correct parameters.
+Return natural, spoken-style conversational replies along with the function call. 
+If the user request is not related to weather, respond normally without calling the function.
 """
         
         # First API call - Let AI decide if it needs to call function
