@@ -205,7 +205,7 @@ EXAMPLES:
         
         # First API call - Let AI decide if it needs to call function
         response = client.chat.completions.create(
-            model="nvidia/llama-3.1-nemotron-nano-8b-v1",
+            model="mistralai/mixtral-8x7b-instruct-v0.1",
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_message}
@@ -232,7 +232,7 @@ EXAMPLES:
                 
                 # Send weather data back to AI for natural response
                 second_response = client.chat.completions.create(
-                    model="nvidia/llama-3.1-nemotron-nano-8b-v1",
+                    model="mistralai/mixtral-8x7b-instruct-v0.1",
                     messages=[
                         {"role": "system", "content": system_prompt},
                         {"role": "user", "content": user_message},
