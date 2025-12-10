@@ -170,7 +170,15 @@ def get_nvidia_response(user_message):
         }]
         
         # System prompt for natural conversation
-        system_prompt = "You are a helpful assistant. Answer questions naturally and briefly. Use available tools when needed."
+        system_prompt = """You are a helpful AI assistant. Answer user questions directly and concisely.
+
+Answer questions naturally and briefly. For greetings, respond with simple greetings. For general questions, give direct answers. Never mention tools or capabilities.
+
+When users ask about weather for a city, use the available tool silently.
+
+Never mention tools, functions, or your capabilities unless explicitly asked.
+
+Keep responses brief (1-3 sentences for simple questions)."""
         
         # First API call - Let AI decide if it needs to call function
         response = client.chat.completions.create(
