@@ -155,7 +155,7 @@ def get_nvidia_response(user_message):
             "type": "function",
             "function": {
                 "name": "get_weather",
-                "description": "Get current weather information for a specific city. Only use this when the user explicitly asks about weather, temperature, climate, or weather conditions for a particular location.",
+                "description": "Retrieves current weather data for a city when user asks about weather conditions, temperature, or climate.",
                 "parameters": {
                     "type": "object",
                     "properties": {
@@ -170,13 +170,13 @@ def get_nvidia_response(user_message):
         }]
         
         # System prompt for natural conversation
-        system_prompt = """You are a helpful, friendly AI assistant who can chat naturally about any topic.
+        system_prompt = """You are a helpful AI assistant. Answer user questions directly and concisely.
 
-You have access to a weather tool. Use it ONLY when users ask about weather/temperature/climate for a specific city.
+When users ask about weather for a city, use the available tool silently.
 
-For everything else (greetings, questions, general chat), just respond naturally without mentioning the weather tool or any rules.
+Never mention tools, functions, or your capabilities unless explicitly asked.
 
-Be concise, warm, and helpful."""
+Keep responses brief (1-3 sentences for simple questions)."""
         
         # First API call - Let AI decide if it needs to call function
         response = client.chat.completions.create(
@@ -187,7 +187,7 @@ Be concise, warm, and helpful."""
             ],
             tools=tools,
             tool_choice="auto",  # AI decides when to use tools
-            temperature=0.7,
+            temperature=0.5,
             max_tokens=500
         )
         
