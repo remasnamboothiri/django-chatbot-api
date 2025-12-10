@@ -155,13 +155,13 @@ def get_nvidia_response(user_message):
             "type": "function",
             "function": {
                 "name": "get_weather",
-                "description": "Retrieves current weather data for a city when user asks about weather conditions, temperature, or climate.",
+                "description": "Get weather data only when user explicitly mentions a specific city with weather-related words like 'weather in [city]', 'temperature in [city]', 'raining in [city]'.",
                 "parameters": {
                     "type": "object",
                     "properties": {
                         "location": {
                             "type": "string",
-                            "description": "The city name, e.g., London, eranakulam, New York, aluva"
+                            "description": "City name"
                         }
                     },
                     "required": ["location"]
@@ -171,6 +171,9 @@ def get_nvidia_response(user_message):
         
         # System prompt for natural conversation
         system_prompt = """You are a helpful AI assistant. Answer user questions directly and concisely.
+
+Answer questions naturally and briefly. For greetings, respond with simple greetings. For general questions, give direct answers. Never mention tools or capabilities.
+
 
 When users ask about weather for a city, use the available tool silently.
 
@@ -187,7 +190,7 @@ Keep responses brief (1-3 sentences for simple questions)."""
             ],
             tools=tools,
             tool_choice="auto",  # AI decides when to use tools
-            temperature=0.5,
+            temperature=0.3,
             max_tokens=500
         )
         
@@ -211,14 +214,14 @@ Keep responses brief (1-3 sentences for simple questions)."""
                     messages=[
                         {"role": "system", "content": system_prompt},
                         {"role": "user", "content": user_message},
-                        {"role": "assistant", "content": None, "tool_calls": [tool_call.model_dump()]},
-                        {
-                            "role": "tool",
-                            "tool_call_id": tool_call.id,
-                            "content": weather_data
-                        }
+                        {"role": "assistant", "content": f"Here's the weather information: {weather_data}"}
+                        # {
+                        #     "role": "tool",
+                        #     "tool_call_id": tool_call.id,
+                        #     "content": weather_data
+                        # }
                     ],
-                    temperature=0.7,
+                    temperature=0.3,
                     max_tokens=500
                 )
                 
